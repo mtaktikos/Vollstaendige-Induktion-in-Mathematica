@@ -1,9 +1,9 @@
-(* Content-type: application/vnd.wolfram.mathematica *)
+(* Content-type: application/mathematica *)
 
 (*** Wolfram Notebook File ***)
 (* http://www.wolfram.com/nb *)
 
-(* CreatedBy='Mathematica 13.0' *)
+(* CreatedBy='Mathematica 7.0' *)
 
 (*CacheID: 234*)
 (* Internal cache information:
