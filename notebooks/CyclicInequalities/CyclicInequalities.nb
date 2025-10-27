@@ -1,0 +1,111 @@
+Notebook[{
+  Cell["Cyclic Inequalities: Toolkit and Automatic Proof", "Title"],
+  Cell["This notebook provides utilities for cyclic sums and automatically proves the inequality:\nSum[u[i]*(u[i-1]^2 - 4*u[i]^2 + 3*u[i+1]^2), {i,1,N}] <= 0 for u[i] >= 0 with cyclic boundary conditions u[0]=u[N], u[N+1]=u[1].", "Text"],
+
+  Cell["Initialization: Cyclic tools", "Section"],
+  Cell[BoxData @ ToBoxes @ HoldComplete[
+    ClearAll[VectorCyclicSum, CyclicSum, CyclicAverage, CyclicCanonicalize, FindEdgeSOSAnsatz, ProveExampleInequality];
+
+    (* Vectorized builder for local terms of the form f(u_i, u_{i-1}, u_{i+1}) *)
+    VectorCyclicSum[f_, u_List] := Module[{left = RotateLeft[u], right = RotateRight[u]},
+      Total @ MapThread[f, {u, right, left}]
+    ];
+
+    (* Symbolic cyclic sum over indices with u[0]=u[n], u[n+1]=u[1] *)
+    CyclicSum[term_, n_Integer?Positive] := Module[{ii},
+      Total @ Table[term /. {u[0] -> u[n], u[n + 1] -> u[1], i -> ii}, {ii, 1, n}]
+    ];
+
+    (* Cyclic average and canonicalization under rotations *)
+    CyclicAverage[expr_, vars_List] := Mean @ Table[expr /. Thread[vars -> RotateLeft[vars, k]], {k, 0, Length[vars] - 1}];
+
+    CyclicCanonicalize[expr_, vars_List] := Module[
+      {rots = Table[expr /. Thread[vars -> RotateLeft[vars, k]], {k, 0, Length[vars] - 1}]},
+      First @ MinimalBy[rots, ToString]
+    ];
+
+    (* Discover edge-wise SOS representation for a two-variable cubic template
+       a x^3 + b y^3 + p x^2 y + q x y^2 == (x - y)^2 (c x + d y) *)
+    FindEdgeSOSAnsatz[p_, q_] := Module[{x, y, a, b, c, d, poly, eqs},
+      poly = a x^3 + b y^3 + p x^2 y + q x y^2 - (x - y)^2 (c x + d y);
+      eqs = Thread[Flatten @ CoefficientList[Expand @ poly, {x, y}] == 0];
+      Solve[eqs, {a, b, c, d}, Reals]
+    ];
+
+    (* Prove: Sum[u_i (u_{i-1}^2 - 4 u_i^2 + 3 u_{i+1}^2)] <= 0 for u_i >= 0 *)
+    ProveExampleInequality[N_Integer?Positive] := Module[
+      {u, left, right, S, sol, a, b, c, d, P, idOK, nonnegOK, concl},
+      u = Array[u, N];
+      left = RotateLeft[u];
+      right = RotateRight[u];
+
+      (* Target cyclic sum *)
+      S = Total[u*(right^2 - 4 u^2 + 3 left^2)] // Expand;
+
+      (* Edge-wise SOS coefficients for (u_i - u_{i+1})^2 (c u_i + d u_{i+1}) *)
+      sol = First @ FindEdgeSOSAnsatz[-1, -3]; (* matches -u_i^2 u_{i+1} - 3 u_i u_{i+1}^2 *)
+      {a, b, c, d} = {a, b, c, d} /. sol;     (* Expected: a=5/3, b=7/3, c=5/3, d=7/3 *)
+
+      (* Nonnegative certificate *)
+      P = Total[(u - left)^2*(c u + d left)] // Expand;
+
+      (* Identity: P == (a + b) Sum u_i^3 - Sum u_i u_{i-1}^2 - 3 Sum u_i u_{i+1}^2 *)
+      idOK = Simplify[
+        Expand[P - ((a + b) Total[u^3] - Total[u*right^2] - 3 Total[u*left^2])]
+      ] === 0;
+
+      (* Nonnegativity and conclusion under u_i >= 0 *)
+      nonnegOK = Simplify[P >= 0, Assumptions -> And @@ Thread[u >= 0]];
+      concl = Simplify[S <= 0, Assumptions -> And @@ Thread[u >= 0]];
+
+      <|
+        "IdentityHolds" -> idOK,
+        "EdgeWeights" -> <|"a" -> a, "b" -> b, "c" -> c, "d" -> d|>,
+        "Certificate" -> P,
+        "NonnegativityCertified" -> nonnegOK,
+        "Conclusion" -> concl
+      |>
+    ];
+  ], "Input", InitializationCell -> True],
+
+  Cell["Run the automated proof", "Section"],
+  Cell[BoxData @ ToBoxes @ HoldComplete[
+    N = 10; (* choose any positive integer *)
+    res = ProveExampleInequality[N]
+  ], "Input"],
+
+  Cell["Interpretation of the result:", "Text"],
+  Cell[BoxData @ ToBoxes @ HoldComplete[
+    {
+      "Edge weights" -> res["EdgeWeights"],
+      "Identity holds?" -> res["IdentityHolds"],
+      "Certificate is nonnegative under u >= 0?" -> res["NonnegativityCertified"],
+      "Conclusion S <= 0 under u >= 0?" -> res["Conclusion"]
+    }
+  ], "Input"],
+
+  Cell["Inspect the nonnegative certificate (sum of edge-wise terms):", "Text"],
+  Cell[BoxData @ ToBoxes @ HoldComplete[
+    TraditionalForm @ res["Certificate"]
+  ], "Input"],
+
+  Cell["Optional: numeric sanity check with random nonnegative vectors", "Section"],
+  Cell[BoxData @ ToBoxes @ HoldComplete[
+    With[{trial = 5, N = 12},
+      Table[
+        Module[{u = RandomReal[{0, 2}, N], left, right, S},
+          left = RotateLeft[u];
+          right = RotateRight[u];
+          S = Total[u*(right^2 - 4 u^2 + 3 left^2)];
+          S
+        ]
+      , {trial}]
+    ] // N
+  ], "Input"],
+
+  Cell["Notes", "Section"],
+  Cell["The proof is based on the edge-wise inequality (u_i - u_{i+1})^2 ( (5/3) u_i + (7/3) u_{i+1}) >= 0, whose telescoped sum equals 4 Sum u_i^3 - Sum u_i u_{i-1}^2 - 3 Sum u_i u_{i+1}^2, yielding the target S <= 0.", "Text"]
+},
+WindowSize -> {900, 900},
+StyleDefinitions -> "Default.nb"
+]
