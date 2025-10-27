@@ -14,7 +14,7 @@ CyclicAverage::usage = "CyclicAverage[expr, vars] computes the average of expr u
 
 CyclicCanonicalize::usage = "CyclicCanonicalize[expr, vars] returns the lexicographically minimal rotation of expr with respect to vars.";
 
-FindEdgeSOSAnsatz::usage = "FindEdgeSOSAnsatz[p, q] finds the edge-wise SOS representation for a x^3 + b y^3 + p x^2 y + q x y^2 == (x - y)^2 (c x + d y).";
+FindEdgeSOSAnsatz::usage = "FindEdgeSOSAnsatz[p, q] finds coefficients {a, b, c, d} for the edge-wise SOS representation: a x^3 + b y^3 + p x^2 y + q x y^2 == (x - y)^2 (c x + d y).";
 
 ProveExampleInequality::usage = "ProveExampleInequality[N] proves the inequality Sum[u_i (u_{i-1}^2 - 4 u_i^2 + 3 u_{i+1}^2)] <= 0 for u_i >= 0 with N variables.";
 
