@@ -1,111 +1,535 @@
+(* Content-type: application/mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 7.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      8000,        200]
+NotebookOptionsPosition[      7500,        180]
+NotebookOutlinePosition[      7900,        196]
+CellTagsIndexPosition[      7857,        193]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
 Notebook[{
-  Cell["Cyclic Inequalities: Toolkit and Automatic Proof", "Title"],
-  Cell["This notebook provides utilities for cyclic sums and automatically proves the inequality:\nSum[u[i]*(u[i-1]^2 - 4*u[i]^2 + 3*u[i+1]^2), {i,1,N}] <= 0 for u[i] >= 0 with cyclic boundary conditions u[0]=u[N], u[N+1]=u[1].", "Text"],
+Cell["Cyclic Inequalities: Toolkit and Automatic Proof", "Title"],
 
-  Cell["Initialization: Cyclic tools", "Section"],
-  Cell[BoxData @ ToBoxes @ HoldComplete[
-    ClearAll[VectorCyclicSum, CyclicSum, CyclicAverage, CyclicCanonicalize, FindEdgeSOSAnsatz, ProveExampleInequality];
+Cell["This notebook provides utilities for cyclic sums and automatically \
+proves the inequality:\nSum[u[i]*(u[i-1]^2 - 4*u[i]^2 + 3*u[i+1]^2), \
+{i,1,N}] <= 0 for u[i] >= 0 with cyclic boundary conditions u[0]=u[N], \
+u[N+1]=u[1].", "Text"],
 
-    (* Vectorized builder for local terms of the form f(u_i, u_{i-1}, u_{i+1}) *)
-    VectorCyclicSum[f_, u_List] := Module[{left = RotateLeft[u], right = RotateRight[u]},
-      Total @ MapThread[f, {u, right, left}]
-    ];
+Cell["Initialization: Cyclic tools", "Section"],
 
-    (* Symbolic cyclic sum over indices with u[0]=u[n], u[n+1]=u[1] *)
-    CyclicSum[term_, n_Integer?Positive] := Module[{ii},
-      Total @ Table[term /. {u[0] -> u[n], u[n + 1] -> u[1], i -> ii}, {ii, 1, n}]
-    ];
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"ClearAll", "[", 
+   RowBox[{
+   "VectorCyclicSum", ",", "CyclicSum", ",", "CyclicAverage", ",", 
+    "CyclicCanonicalize", ",", "FindEdgeSOSAnsatz", ",", 
+    "ProveExampleInequality"}], "]"}], ";", "\[IndentingNewLine]", 
+  "\[IndentingNewLine]", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Vectorized", " ", "builder", " ", "for", " ", "local", " ", "terms", " ", 
+    "of", " ", "the", " ", "form", " ", 
+    RowBox[{"f", 
+     RowBox[{"(", 
+      RowBox[{
+      "u_i", ",", " ", "u_", 
+       RowBox[{"{", 
+        RowBox[{"i", "-", "1"}], "}"}], ",", " ", "u_", 
+       RowBox[{"{", 
+        RowBox[{"i", "+", "1"}], "}"}]}], ")"}]}]}], " ", "*)"}], 
+  "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"VectorCyclicSum", "[", 
+     RowBox[{"f_", ",", "u_List"}], "]"}], ":=", 
+    RowBox[{"Module", "[", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"left", "=", 
+         RowBox[{"RotateLeft", "[", "u", "]"}]}], ",", 
+        RowBox[{"right", "=", 
+         RowBox[{"RotateRight", "[", "u", "]"}]}]}], "}"}], ",", 
+      "\[IndentingNewLine]", 
+      RowBox[{"Total", "[", 
+       RowBox[{"MapThread", "[", 
+        RowBox[{"f", ",", 
+         RowBox[{"{", 
+          RowBox[{"u", ",", "right", ",", "left"}], "}"}]}], "]"}], "]"}]}], 
+     "\[IndentingNewLine]", "]"}]}], ";"}], "\[IndentingNewLine]", 
+  "\[IndentingNewLine]", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Symbolic", " ", "cyclic", " ", "sum", " ", "over", " ", "indices", " ", 
+    "with", " ", 
+    RowBox[{"u", "[", "0", "]"}], "=", 
+    RowBox[{"u", "[", "n", "]"}], ",", " ", 
+    RowBox[{
+     RowBox[{"u", "[", 
+      RowBox[{"n", "+", "1"}], "]"}], "=", 
+     RowBox[{"u", "[", "1", "]"}]}]}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"CyclicSum", "[", 
+     RowBox[{"term_", ",", "n_Integer"}], "]"}], ":=", 
+    RowBox[{"Module", "[", 
+     RowBox[{
+      RowBox[{"{", "ii", "}"}], ",", "\[IndentingNewLine]", 
+      RowBox[{"Total", "[", 
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"term", "/.", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"u", "[", "0", "]"}], "->", 
+             RowBox[{"u", "[", "n", "]"}]}], ",", 
+            RowBox[{
+             RowBox[{"u", "[", 
+              RowBox[{"n", "+", "1"}], "]"}], "->", 
+             RowBox[{"u", "[", "1", "]"}]}], ",", 
+            RowBox[{"i", "->", "ii"}]}], "}"}]}], ",", 
+         RowBox[{"{", 
+          RowBox[{"ii", ",", "1", ",", "n"}], "}"}]}], "]"}], "]"}]}], 
+     "\[IndentingNewLine]", "]"}]}], ";"}], "\[IndentingNewLine]", 
+  "\[IndentingNewLine]", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Cyclic", " ", "average", " ", "and", " ", "canonicalization", " ", 
+    "under", " ", "rotations"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"CyclicAverage", "[", 
+     RowBox[{"expr_", ",", "vars_List"}], "]"}], ":=", 
+    RowBox[{"Mean", "[", 
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"expr", "/.", 
+        RowBox[{"Thread", "[", 
+         RowBox[{"vars", "->", 
+          RowBox[{"RotateLeft", "[", 
+           RowBox[{"vars", ",", "k"}], "]"}]}], "]"}]}], ",", 
+       RowBox[{"{", 
+        RowBox[{"k", ",", "0", ",", 
+         RowBox[{
+          RowBox[{"Length", "[", "vars", "]"}], "-", "1"}]}], "}"}]}], "]"}],
+      "]"}]}], ";"}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"CyclicCanonicalize", "[", 
+     RowBox[{"expr_", ",", "vars_List"}], "]"}], ":=", 
+    RowBox[{"Module", "[", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"rots", "=", 
+        RowBox[{"Table", "[", 
+         RowBox[{
+          RowBox[{"expr", "/.", 
+           RowBox[{"Thread", "[", 
+            RowBox[{"vars", "->", 
+             RowBox[{"RotateLeft", "[", 
+              RowBox[{"vars", ",", "k"}], "]"}]}], "]"}]}], ",", 
+          RowBox[{"{", 
+           RowBox[{"k", ",", "0", ",", 
+            RowBox[{
+             RowBox[{"Length", "[", "vars", "]"}], "-", "1"}]}], "}"}]}], 
+         "]"}]}], "}"}], ",", "\[IndentingNewLine]", 
+      RowBox[{"First", "[", 
+       RowBox[{"MinimalBy", "[", 
+        RowBox[{"rots", ",", "ToString"}], "]"}], "]"}]}], 
+     "\[IndentingNewLine]", "]"}]}], ";"}], "\[IndentingNewLine]", 
+  "\[IndentingNewLine]", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Discover", " ", "edge", "-", "wise", " ", "SOS", " ", "representation", 
+    " ", "for", " ", "a", " ", "two", "-", "variable", " ", "cubic", " ", 
+    "template", "\[IndentingNewLine]", "       ", "a", " ", 
+    RowBox[{"x", "^", "3"}], " ", "+", " ", "b", " ", 
+    RowBox[{"y", "^", "3"}], " ", "+", " ", "p", " ", 
+    RowBox[{"x", "^", "2"}], " ", "y", " ", "+", " ", "q", " ", "x", " ", 
+    RowBox[{"y", "^", "2"}], " ", "==", " ", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"(", 
+       RowBox[{"x", " ", "-", " ", "y"}], ")"}], "^", "2"}], " ", 
+     RowBox[{"(", 
+      RowBox[{
+       RowBox[{"c", " ", "x"}], " ", "+", " ", 
+       RowBox[{"d", " ", "y"}]}], ")"}]}]}], " ", "*)"}], 
+  "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"FindEdgeSOSAnsatz", "[", 
+     RowBox[{"p_", ",", "q_"}], "]"}], ":=", 
+    RowBox[{"Module", "[", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{
+       "x", ",", "y", ",", "a", ",", "b", ",", "c", ",", "d", ",", "poly", 
+        ",", "eqs"}], "}"}], ",", "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"poly", "=", 
+        RowBox[{
+         RowBox[{"a", " ", 
+          RowBox[{"x", "^", "3"}]}], "+", 
+         RowBox[{"b", " ", 
+          RowBox[{"y", "^", "3"}]}], "+", 
+         RowBox[{"p", " ", 
+          RowBox[{"x", "^", "2"}], " ", "y"}], "+", 
+         RowBox[{"q", " ", "x", " ", 
+          RowBox[{"y", "^", "2"}]}], "-", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"(", 
+            RowBox[{"x", "-", "y"}], ")"}], "^", "2"}], 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"c", " ", "x"}], "+", 
+            RowBox[{"d", " ", "y"}]}], ")"}]}]}]}], ";", 
+       "\[IndentingNewLine]", 
+       RowBox[{"eqs", "=", 
+        RowBox[{"Thread", "[", 
+         RowBox[{
+          RowBox[{"Flatten", "[", 
+           RowBox[{"CoefficientList", "[", 
+            RowBox[{
+             RowBox[{"Expand", "[", "poly", "]"}], ",", 
+             RowBox[{"{", 
+              RowBox[{"x", ",", "y"}], "}"}]}], "]"}], "]"}], "==", "0"}], 
+         "]"}]}], ";", "\[IndentingNewLine]", 
+       RowBox[{"Solve", "[", 
+        RowBox[{"eqs", ",", 
+         RowBox[{"{", 
+          RowBox[{"a", ",", "b", ",", "c", ",", "d"}], "}"}], ",", "Reals"}],
+         "]"}]}]}], "\[IndentingNewLine]", "]"}]}], ";"}], 
+  "\[IndentingNewLine]", "\[IndentingNewLine]", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Prove", ":", " ", 
+    RowBox[{"Sum", "[", 
+     RowBox[{
+      RowBox[{"u_i", " ", 
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"u_", 
+          RowBox[{"{", 
+           RowBox[{"i", "-", "1"}], "}"}], "^", "2"}], " ", "-", " ", 
+         RowBox[{"4", " ", 
+          RowBox[{"u_i", "^", "2"}]}], " ", "+", " ", 
+         RowBox[{"3", " ", "u_", 
+          RowBox[{"{", 
+           RowBox[{"i", "+", "1"}], "}"}], "^", "2"}]}], ")"}]}], "]"}], " ", 
+    "<=", " ", "0", " ", "for", " ", "u_i", " ", ">=", " ", "0"}], " ", 
+   "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"ProveExampleInequality", "[", "N_Integer", "]"}], ":=", 
+   RowBox[{"Module", "[", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+      "u", ",", "left", ",", "right", ",", "S", ",", "sol", ",", "a", ",", 
+       "b", ",", "c", ",", "d", ",", "P", ",", "idOK", ",", "nonnegOK", ",", 
+       "concl"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"u", "=", 
+       RowBox[{"Array", "[", 
+        RowBox[{"u", ",", "N"}], "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"left", "=", 
+       RowBox[{"RotateLeft", "[", "u", "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"right", "=", 
+       RowBox[{"RotateRight", "[", "u", "]"}]}], ";", "\[IndentingNewLine]", 
+      "\[IndentingNewLine]", 
+      RowBox[{"(*", " ", 
+       RowBox[{"Target", " ", "cyclic", " ", "sum"}], " ", "*)"}], 
+      "\[IndentingNewLine]", 
+      RowBox[{"S", "=", 
+       RowBox[{"Expand", "[", 
+        RowBox[{"Total", "[", 
+         RowBox[{"u", "*", 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"right", "^", "2"}], "-", 
+            RowBox[{"4", " ", 
+             RowBox[{"u", "^", "2"}]}], "+", 
+            RowBox[{"3", " ", 
+             RowBox[{"left", "^", "2"}]}]}], ")"}]}], "]"}], "]"}]}], ";", 
+      "\[IndentingNewLine]", "\[IndentingNewLine]", 
+      RowBox[{"(*", " ", 
+       RowBox[{
+        RowBox[{"Edge", "-", 
+         RowBox[{"wise", " ", "SOS", " ", "coefficients", " ", "for", " ", 
+          RowBox[{
+           RowBox[{"(", 
+            RowBox[{"u_i", " ", "-", " ", "u_", 
+             RowBox[{"{", 
+              RowBox[{"i", "+", "1"}], "}"}]}], ")"}], "^", "2"}], " ", 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"c", " ", "u_i"}], " ", "+", " ", 
+            RowBox[{"d", " ", "u_", 
+             RowBox[{"{", 
+              RowBox[{"i", "+", "1"}], "}"}]}]}], ")"}]}]}], " ", "*)"}], 
+       "\[IndentingNewLine]", 
+       RowBox[{"sol", "=", 
+        RowBox[{"First", "[", 
+         RowBox[{"FindEdgeSOSAnsatz", "[", 
+          RowBox[{
+           RowBox[{"-", "1"}], ",", 
+           RowBox[{"-", "3"}]}], "]"}], "]"}]}], ";"}], " ", 
+      RowBox[{"(*", " ", 
+       RowBox[{"matches", " ", 
+        RowBox[{"-", "u_i"}], "^", "2", " ", "u_", 
+        RowBox[{"{", 
+         RowBox[{"i", "+", "1"}], "}"}], " ", "-", " ", "3", " ", "u_i", " ", 
+        "u_", 
+        RowBox[{"{", 
+         RowBox[{"i", "+", "1"}], "}"}], "^", "2"}], " ", "*)"}], 
+      "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"a", ",", "b", ",", "c", ",", "d"}], "}"}], "=", 
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{"a", ",", "b", ",", "c", ",", "d"}], "}"}], "/.", "sol"}]}],
+       ";", "     ", 
+      RowBox[{"(*", " ", 
+       RowBox[{"Expected", ":", " ", 
+        RowBox[{"a", "=", 
+         RowBox[{"5", "/", "3"}]}], ",", " ", 
+        RowBox[{"b", "=", 
+         RowBox[{"7", "/", "3"}]}], ",", " ", 
+        RowBox[{"c", "=", 
+         RowBox[{"5", "/", "3"}]}], ",", " ", 
+        RowBox[{"d", "=", 
+         RowBox[{"7", "/", "3"}]}]}], " ", "*)"}], "\[IndentingNewLine]", 
+      "\[IndentingNewLine]", 
+      RowBox[{"(*", " ", 
+       RowBox[{"Nonnegative", " ", "certificate"}], " ", "*)"}], 
+      "\[IndentingNewLine]", 
+      RowBox[{"P", "=", 
+       RowBox[{"Expand", "[", 
+        RowBox[{"Total", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"(", 
+            RowBox[{"u", "-", "left"}], ")"}], "^", "2"}], "*", 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"c", " ", "u"}], "+", 
+            RowBox[{"d", " ", "left"}]}], ")"}]}], "]"}], "]"}]}], ";", 
+      "\[IndentingNewLine]", "\[IndentingNewLine]", 
+      RowBox[{"(*", " ", 
+       RowBox[{"Identity", ":", " ", 
+        RowBox[{"P", " ", "==", " ", 
+         RowBox[{
+          RowBox[{"(", 
+           RowBox[{"a", " ", "+", " ", "b"}], ")"}], " ", "Sum", " ", 
+          RowBox[{"u_i", "^", "3"}], " ", "-", " ", "Sum", " ", "u_i", " ", 
+          "u_", 
+          RowBox[{"{", 
+           RowBox[{"i", "-", "1"}], "}"}], "^", "2", " ", "-", " ", "3", " ", 
+          "Sum", " ", "u_i", " ", "u_", 
+          RowBox[{"{", 
+           RowBox[{"i", "+", "1"}], "}"}], "^", "2"}]}]}], " ", "*)"}], 
+      "\[IndentingNewLine]", 
+      RowBox[{"idOK", "=", 
+       RowBox[{
+        RowBox[{"Simplify", "[", "\[IndentingNewLine]", 
+         RowBox[{"Expand", "[", 
+          RowBox[{"P", "-", 
+           RowBox[{"(", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"(", 
+               RowBox[{"a", "+", "b"}], ")"}], 
+              RowBox[{"Total", "[", 
+               RowBox[{"u", "^", "3"}], "]"}]}], "-", 
+             RowBox[{"Total", "[", 
+              RowBox[{"u", "*", 
+               RowBox[{"right", "^", "2"}]}], "]"}], "-", 
+             RowBox[{"3", " ", 
+              RowBox[{"Total", "[", 
+               RowBox[{"u", "*", 
+                RowBox[{"left", "^", "2"}]}], "]"}]}]}], ")"}]}], "]"}], 
+         "\[IndentingNewLine]", "]"}], "===", "0"}]}], ";", 
+      "\[IndentingNewLine]", "\[IndentingNewLine]", 
+      RowBox[{"(*", " ", 
+       RowBox[{
+       "Nonnegativity", " ", "and", " ", "conclusion", " ", "under", " ", 
+        "u_i", " ", ">=", " ", "0"}], " ", "*)"}], "\[IndentingNewLine]", 
+      RowBox[{"nonnegOK", "=", 
+       RowBox[{"Simplify", "[", 
+        RowBox[{
+         RowBox[{"P", ">=", "0"}], ",", 
+         RowBox[{"Assumptions", "->", 
+          RowBox[{"And", "@@", 
+           RowBox[{"Thread", "[", 
+            RowBox[{"u", ">=", "0"}], "]"}]}]}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"concl", "=", 
+       RowBox[{"Simplify", "[", 
+        RowBox[{
+         RowBox[{"S", "<=", "0"}], ",", 
+         RowBox[{"Assumptions", "->", 
+          RowBox[{"And", "@@", 
+           RowBox[{"Thread", "[", 
+            RowBox[{"u", ">=", "0"}], "]"}]}]}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", "\[IndentingNewLine]", 
+      RowBox[{"Association", "[", "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{"\"\<IdentityHolds\>\"", "->", "idOK"}], ",", 
+        "\[IndentingNewLine]", 
+        RowBox[{"\"\<EdgeWeights\>\"", "->", 
+         RowBox[{"Association", "[", 
+          RowBox[{
+           RowBox[{"\"\<a\>\"", "->", "a"}], ",", 
+           RowBox[{"\"\<b\>\"", "->", "b"}], ",", 
+           RowBox[{"\"\<c\>\"", "->", "c"}], ",", 
+           RowBox[{"\"\<d\>\"", "->", "d"}]}], "]"}]}], ",", 
+        "\[IndentingNewLine]", 
+        RowBox[{"\"\<Certificate\>\"", "->", "P"}], ",", 
+        "\[IndentingNewLine]", 
+        RowBox[{"\"\<NonnegativityCertified\>\"", "->", "nonnegOK"}], ",", 
+        "\[IndentingNewLine]", 
+        RowBox[{"\"\<Conclusion\>\"", "->", "concl"}]}], 
+       "\[IndentingNewLine]", "]"}]}]}], "\[IndentingNewLine]", "]"}]}], 
+  ";"}]], "Input",
+ InitializationCell->True],
 
-    (* Cyclic average and canonicalization under rotations *)
-    CyclicAverage[expr_, vars_List] := Mean @ Table[expr /. Thread[vars -> RotateLeft[vars, k]], {k, 0, Length[vars] - 1}];
+Cell["Run the automated proof", "Section"],
 
-    CyclicCanonicalize[expr_, vars_List] := Module[
-      {rots = Table[expr /. Thread[vars -> RotateLeft[vars, k]], {k, 0, Length[vars] - 1}]},
-      First @ MinimalBy[rots, ToString]
-    ];
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"N", "=", "10"}], ";", " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"choose", " ", "any", " ", "positive", " ", "integer"}], " ", 
+   "*)"}], "\[IndentingNewLine]", 
+  RowBox[{"res", "=", 
+   RowBox[{"ProveExampleInequality", "[", "N", "]"}]}]}]], "Input"],
 
-    (* Discover edge-wise SOS representation for a two-variable cubic template
-       a x^3 + b y^3 + p x^2 y + q x y^2 == (x - y)^2 (c x + d y) *)
-    FindEdgeSOSAnsatz[p_, q_] := Module[{x, y, a, b, c, d, poly, eqs},
-      poly = a x^3 + b y^3 + p x^2 y + q x y^2 - (x - y)^2 (c x + d y);
-      eqs = Thread[Flatten @ CoefficientList[Expand @ poly, {x, y}] == 0];
-      Solve[eqs, {a, b, c, d}, Reals]
-    ];
+Cell["Interpretation of the result:", "Text"],
 
-    (* Prove: Sum[u_i (u_{i-1}^2 - 4 u_i^2 + 3 u_{i+1}^2)] <= 0 for u_i >= 0 *)
-    ProveExampleInequality[N_Integer?Positive] := Module[
-      {u, left, right, S, sol, a, b, c, d, P, idOK, nonnegOK, concl},
-      u = Array[u, N];
-      left = RotateLeft[u];
-      right = RotateRight[u];
+Cell[BoxData[
+ RowBox[{"{", "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"\"\<Edge weights\>\"", "->", 
+    RowBox[{"res", "[", "\"\<EdgeWeights\>\"", "]"}]}], ",", 
+   "\[IndentingNewLine]", 
+   RowBox[{"\"\<Identity holds?\>\"", "->", 
+    RowBox[{"res", "[", "\"\<IdentityHolds\>\"", "]"}]}], ",", 
+   "\[IndentingNewLine]", 
+   RowBox[{
+   "\"\<Certificate is nonnegative under u >= 0?\>\"", "->", 
+    RowBox[{"res", "[", "\"\<NonnegativityCertified\>\"", "]"}]}], ",", 
+   "\[IndentingNewLine]", 
+   RowBox[{"\"\<Conclusion S <= 0 under u >= 0?\>\"", "->", 
+    RowBox[{"res", "[", "\"\<Conclusion\>\"", "]"}]}]}], 
+  "\[IndentingNewLine]", "}"}]], "Input"],
 
-      (* Target cyclic sum *)
-      S = Total[u*(right^2 - 4 u^2 + 3 left^2)] // Expand;
+Cell["\<\
+Inspect the nonnegative certificate (sum of edge-wise terms):\
+\>", "Text"],
 
-      (* Edge-wise SOS coefficients for (u_i - u_{i+1})^2 (c u_i + d u_{i+1}) *)
-      sol = First @ FindEdgeSOSAnsatz[-1, -3]; (* matches -u_i^2 u_{i+1} - 3 u_i u_{i+1}^2 *)
-      {a, b, c, d} = {a, b, c, d} /. sol;     (* Expected: a=5/3, b=7/3, c=5/3, d=7/3 *)
+Cell[BoxData[
+ RowBox[{"TraditionalForm", "[", 
+  RowBox[{"res", "[", "\"\<Certificate\>\"", "]"}], "]"}]], "Input"],
 
-      (* Nonnegative certificate *)
-      P = Total[(u - left)^2*(c u + d left)] // Expand;
+Cell["\<\
+Optional: numeric sanity check with random nonnegative vectors\
+\>", "Section"],
 
-      (* Identity: P == (a + b) Sum u_i^3 - Sum u_i u_{i-1}^2 - 3 Sum u_i u_{i+1}^2 *)
-      idOK = Simplify[
-        Expand[P - ((a + b) Total[u^3] - Total[u*right^2] - 3 Total[u*left^2])]
-      ] === 0;
+Cell[BoxData[
+ RowBox[{"N", "[", "\[IndentingNewLine]", 
+  RowBox[{"With", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"trial", "=", "5"}], ",", 
+      RowBox[{"N", "=", "12"}]}], "}"}], ",", "\[IndentingNewLine]", 
+    RowBox[{"Table", "[", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"Module", "[", 
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{
+          RowBox[{"u", "=", 
+           RowBox[{"RandomReal", "[", 
+            RowBox[{
+             RowBox[{"{", 
+              RowBox[{"0", ",", "2"}], "}"}], ",", "N"}], "]"}]}], ",", 
+          "left", ",", "right", ",", "S"}], "}"}], ",", 
+        "\[IndentingNewLine]", 
+        RowBox[{
+         RowBox[{"left", "=", 
+          RowBox[{"RotateLeft", "[", "u", "]"}]}], ";", 
+         "\[IndentingNewLine]", 
+         RowBox[{"right", "=", 
+          RowBox[{"RotateRight", "[", "u", "]"}]}], ";", 
+         "\[IndentingNewLine]", 
+         RowBox[{"S", "=", 
+          RowBox[{"Total", "[", 
+           RowBox[{"u", "*", 
+            RowBox[{"(", 
+             RowBox[{
+              RowBox[{"right", "^", "2"}], "-", 
+              RowBox[{"4", " ", 
+               RowBox[{"u", "^", "2"}]}], "+", 
+              RowBox[{"3", " ", 
+               RowBox[{"left", "^", "2"}]}]}], ")"}]}], "]"}]}], ";", 
+         "\[IndentingNewLine]", "S"}]}], "\[IndentingNewLine]", "]"}], ",", 
+      "\[IndentingNewLine]", 
+      RowBox[{"{", "trial", "}"}]}], "]"}]}], "\[IndentingNewLine]", "]"}], 
+  "\[IndentingNewLine]", "]"}]], "Input"],
 
-      (* Nonnegativity and conclusion under u_i >= 0 *)
-      nonnegOK = Simplify[P >= 0, Assumptions -> And @@ Thread[u >= 0]];
-      concl = Simplify[S <= 0, Assumptions -> And @@ Thread[u >= 0]];
+Cell["Notes", "Section"],
 
-      <|
-        "IdentityHolds" -> idOK,
-        "EdgeWeights" -> <|"a" -> a, "b" -> b, "c" -> c, "d" -> d|>,
-        "Certificate" -> P,
-        "NonnegativityCertified" -> nonnegOK,
-        "Conclusion" -> concl
-      |>
-    ];
-  ], "Input", InitializationCell -> True],
-
-  Cell["Run the automated proof", "Section"],
-  Cell[BoxData @ ToBoxes @ HoldComplete[
-    N = 10; (* choose any positive integer *)
-    res = ProveExampleInequality[N]
-  ], "Input"],
-
-  Cell["Interpretation of the result:", "Text"],
-  Cell[BoxData @ ToBoxes @ HoldComplete[
-    {
-      "Edge weights" -> res["EdgeWeights"],
-      "Identity holds?" -> res["IdentityHolds"],
-      "Certificate is nonnegative under u >= 0?" -> res["NonnegativityCertified"],
-      "Conclusion S <= 0 under u >= 0?" -> res["Conclusion"]
-    }
-  ], "Input"],
-
-  Cell["Inspect the nonnegative certificate (sum of edge-wise terms):", "Text"],
-  Cell[BoxData @ ToBoxes @ HoldComplete[
-    TraditionalForm @ res["Certificate"]
-  ], "Input"],
-
-  Cell["Optional: numeric sanity check with random nonnegative vectors", "Section"],
-  Cell[BoxData @ ToBoxes @ HoldComplete[
-    With[{trial = 5, N = 12},
-      Table[
-        Module[{u = RandomReal[{0, 2}, N], left, right, S},
-          left = RotateLeft[u];
-          right = RotateRight[u];
-          S = Total[u*(right^2 - 4 u^2 + 3 left^2)];
-          S
-        ]
-      , {trial}]
-    ] // N
-  ], "Input"],
-
-  Cell["Notes", "Section"],
-  Cell["The proof is based on the edge-wise inequality (u_i - u_{i+1})^2 ( (5/3) u_i + (7/3) u_{i+1}) >= 0, whose telescoped sum equals 4 Sum u_i^3 - Sum u_i u_{i-1}^2 - 3 Sum u_i u_{i+1}^2, yielding the target S <= 0.", "Text"]
+Cell["\<\
+The proof is based on the edge-wise inequality (u_i - u_{i+1})^2 ( (5/3) u_i \
++ (7/3) u_{i+1}) >= 0, whose telescoped sum equals 4 Sum u_i^3 - Sum u_i \
+u_{i-1}^2 - 3 Sum u_i u_{i+1}^2, yielding the target S <= 0.\
+\>", "Text"]
 },
-WindowSize -> {900, 900},
-StyleDefinitions -> "Default.nb"
+WindowSize->{900, 900},
+WindowMargins->{{Automatic, 0}, {0, Automatic}},
+FrontEndVersion->"13.0 for Linux x86 (64-bit) (December 2, 2021)",
+StyleDefinitions->"Default.nb"
 ]
+(* End of Notebook Content *)
+
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 72, 0, 98, "Title"],
+Cell[633, 22, 311, 3, 81, "Text"],
+Cell[947, 27, 53, 0, 67, "Section"],
+Cell[1003, 29, 7951, 202, 1172, "Input",
+ InitializationCell->True],
+Cell[8957, 233, 43, 0, 67, "Section"],
+Cell[9003, 235, 293, 7, 51, "Input"],
+Cell[9299, 244, 47, 0, 35, "Text"],
+Cell[9349, 246, 674, 15, 133, "Input"],
+Cell[10026, 263, 88, 2, 35, "Text"],
+Cell[10117, 267, 124, 2, 29, "Input"],
+Cell[10244, 271, 93, 2, 67, "Section"],
+Cell[10340, 275, 1495, 41, 256, "Input"],
+Cell[11838, 318, 27, 0, 67, "Section"],
+Cell[11868, 320, 250, 4, 81, "Text"]
+}
+]
+*)
