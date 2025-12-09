@@ -1,0 +1,134 @@
+Ramanujan Machine Package for Mathematica
+==========================================
+
+This package provides Mathematica implementations of functions from the Ramanujan Machine 
+Python library (https://github.com/RamanujanMachine/RamanujanMachine).
+
+The Ramanujan Machine is an algorithmic approach to discover new mathematical conjectures,
+particularly focused on finding formulas relating fundamental constants like Pi, E, and 
+the Riemann zeta function to various continued fractions.
+
+INSTALLATION
+------------
+
+1. Copy Ramanujan.m to a location where Mathematica can find it, or
+2. Load it directly using: Get["path/to/Ramanujan.m"]
+
+MAIN FEATURES
+-------------
+
+1. Mathematical Constants
+   - GetRamanujanConstants[] - Returns association of mathematical constants
+
+2. Mobius Transformations
+   - ApplyMobiusTransform[{{a,b},{c,d}}, x] - Apply Mobius transform (ax+b)/(cx+d) to x
+   - ComposeMobiusTransforms[t1, t2] - Compose two transforms
+   - InverseMobiusTransform[t] - Get inverse transform
+   - ReciprocalMobiusTransform[t] - Get reciprocal transform
+   - FindMobiusTransform[x, y, limit] - Find integer transform where T(x) = y
+
+3. Continued Fractions
+   - SimpleContinuedFraction[const, depth] - Compute simple CF expansion
+   - EvaluateGCF[an, bn, depth] - Evaluate generalized continued fraction
+   - GeneralizedContinuedFraction[an, bn, depth] - Full GCF with Mobius representation
+   - PrintGCF[an, bn, depth] - Pretty print a GCF
+   - ConvergenceRate[an, bn, maxDepth] - Plot convergence of GCF
+
+4. Polynomial Series
+   - PolynomialSeries[coefs, n] - Evaluate polynomial at n
+   - IterPolynomialSeries[coefs, maxN] - Generate series values
+
+5. LHS Hash Tables
+   - CreateLHSTable[constants, searchRange] - Create lookup table for constant relations
+
+BASIC USAGE EXAMPLES
+--------------------
+
+(* Load the package *)
+<<Ramanujan`
+
+(* Example 1: Simple Continued Fraction of Pi *)
+cfPi = Ramanujan`SimpleContinuedFraction[Pi, 15]
+(* Output: {3, 7, 15, 1, 292, 1, 1, 1, 2, 1, 3, 1, 14, 2, 1} *)
+
+(* Example 2: Evaluate a Generalized Continued Fraction *)
+an = Table[n, {n, 1, 20}];
+bn = Table[n, {n, 1, 20}];
+gcf = Ramanujan`EvaluateGCF[an, bn, 20]
+(* This approximates E-1 *)
+
+(* Example 3: Golden Ratio from GCF with all 1s *)
+an = Table[1, {10}];
+bn = Table[1, {10}];
+Ramanujan`EvaluateGCF[an, bn, 10]
+(* Output: approximation of GoldenRatio *)
+
+(* Example 4: Mobius Transform *)
+t = {{1, 2}, {3, 4}};  (* T(x) = (x + 2)/(3x + 4) *)
+Ramanujan`ApplyMobiusTransform[t, 5]
+(* Output: 7/19 *)
+
+(* Example 5: Compose Transforms *)
+t1 = {{1, 2}, {3, 4}};
+t2 = {{2, 1}, {1, 3}};
+t3 = Ramanujan`ComposeMobiusTransforms[t1, t2];
+Ramanujan`ApplyMobiusTransform[t3, x]
+
+(* Example 6: Find Transform Relating Constants *)
+x = N[Pi, 30];
+y = N[(2*Pi + 1)/(Pi + 3), 30];
+transform = Ramanujan`FindMobiusTransform[x, y, 10]
+(* Finds integer matrix {{a,b},{c,d}} such that (ax+b)/(cx+d) = y *)
+
+(* Example 7: Polynomial Series *)
+coefs = {1, 2, 3};  (* Represents n(n + 2) + 3 = n^2 + 2n + 3 *)
+Ramanujan`PolynomialSeries[coefs, 5]
+(* Output: 38 *)
+
+Ramanujan`IterPolynomialSeries[coefs, 10]
+(* Output: {6, 11, 18, 27, 38, 51, 66, 83, 102, 123} *)
+
+ADVANCED EXAMPLES
+-----------------
+
+(* Convergence visualization *)
+an = Table[n, {n, 1, 50}];
+bn = Table[n^2, {n, 1, 50}];
+Ramanujan`ConvergenceRate[an, bn, 50]
+
+(* Create LHS lookup table for Pi *)
+lhsTable = Ramanujan`CreateLHSTable[{Pi}, 5]
+(* This creates a hash table of Mobius transforms of Pi *)
+
+RELATIONSHIP TO PYTHON LIBRARY
+-------------------------------
+
+This Mathematica package translates the following Python modules:
+
+1. ramanujan/utils/mobius.py
+   - MobiusTransform class → Mobius transform functions
+   - GeneralizedContinuedFraction class → GCF functions
+   - EfficientGCF class → EvaluateGCF function
+
+2. ramanujan/constants.py
+   - g_const_dict → GetRamanujanConstants function
+
+3. ramanujan/utils/utils.py
+   - iter_series_items_from_compact_poly → PolynomialSeries functions
+
+4. ramanujan/LHSHashTable.py
+   - LHSHashTable class → CreateLHSTable function
+
+The Mathematica implementation focuses on the core mathematical operations,
+while the Python library includes additional features for parallel enumeration
+and database storage that are less relevant for interactive Mathematica use.
+
+FURTHER READING
+---------------
+
+For more information about the Ramanujan Machine project:
+- Website: https://www.RamanujanMachine.com
+- GitHub: https://github.com/RamanujanMachine/RamanujanMachine
+- Paper: "The Ramanujan Machine: Automatically Generated Conjectures on Fundamental Constants"
+
+See RamanujanExamples.nb for a comprehensive interactive notebook with examples.
