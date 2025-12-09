@@ -13,12 +13,12 @@ InverseMobiusTransform::usage = "InverseMobiusTransform[transform] returns the i
 ReciprocalMobiusTransform::usage = "ReciprocalMobiusTransform[transform] returns the reciprocal transformation.";
 
 GeneralizedContinuedFraction::usage = "GeneralizedContinuedFraction[an, bn, depth] computes a generalized continued fraction with coefficients an and bn.";
-EvaluateGCF::usage = "EvaluateGCF[an, bn, depth] evaluates a generalized continued fraction to the specified depth.";
+EvaluateGCF::usage = "EvaluateGCF[an, bn, depth] evaluates a generalized continued fraction to the specified depth with default precision of 50 digits.";
 SimpleContinuedFraction::usage = "SimpleContinuedFraction[constant, depth] computes simple continued fraction expansion.";
 
-FindMobiusTransform::usage = "FindMobiusTransform[x, y, limit] finds integer Mobius transform such that T(x) = y.";
+FindMobiusTransform::usage = "FindMobiusTransform[x, y, limit, threshold] finds integer Mobius transform T such that T(x) = y. The constraint a*x + b >= 1 avoids trivial solutions and removes redundancy.";
 
-CreateLHSTable::usage = "CreateLHSTable[constants, searchRange] creates a lookup table of Mobius transforms of constants.";
+CreateLHSTable::usage = "CreateLHSTable[constants, searchRange] creates a lookup table of Mobius transforms of constants. Options: Threshold (default 10^-10), Precision (default 50).";
 
 GetRamanujanConstants::usage = "GetRamanujanConstants[] returns a list of mathematical constants used in Ramanujan Machine.";
 
@@ -80,7 +80,8 @@ MobiusTransformExpression[{{a_, b_}, {c_, d_}}, x_] := (a*x + b)/(c*x + d);
 (* ============================================================================ *)
 
 (* Efficient evaluation of generalized continued fraction using convergents *)
-EvaluateGCF[an_List, bn_List, depth_Integer] := Module[
+(* Uses recursive formula for convergents: https://en.wikipedia.org/wiki/Generalized_continued_fraction *)
+EvaluateGCF[an_List, bn_List, depth_Integer, precision_Integer:50] := Module[
     {prevA, A, prevB, B, i, tmpA, tmpB, len},
     
     len = Min[depth, Length[an], Length[bn]];
@@ -93,7 +94,7 @@ EvaluateGCF[an_List, bn_List, depth_Integer] := Module[
     prevB = 1;
     B = an[[1]];
     
-    (* Iterate through the continued fraction *)
+    (* Iterate through the continued fraction using convergent recurrence *)
     Do[
         tmpA = A;
         tmpB = B;
@@ -104,8 +105,8 @@ EvaluateGCF[an_List, bn_List, depth_Integer] := Module[
         {i, 2, len}
     ];
     
-    (* Return the final convergent *)
-    If[A == 0, 0, N[B/A, 50]]
+    (* Return the final convergent with specified precision (default 50 digits) *)
+    If[A == 0, 0, N[B/A, precision]]
 ];
 
 (* Generalized continued fraction with Mobius transform representation *)
@@ -165,15 +166,25 @@ IterPolynomialSeries[coefs_List, maxN_Integer] :=
 (* LHS Hash Table Functions *)
 (* ============================================================================ *)
 
+(* Options for CreateLHSTable *)
+Options[CreateLHSTable] = {
+    "Threshold" -> 10^-10,  (* Decimal threshold for comparison *)
+    "Precision" -> 50        (* Working precision for constant evaluation *)
+};
+
 (* Create lookup table of Mobius transforms of constants *)
 CreateLHSTable[constants_List, searchRange_Integer, opts:OptionsPattern[]] := Module[
-    {threshold, nConstants, coefRange, numeratorCoefs, denominatorCoefs, 
-     lhsTable, constVals, num, denom, value, key},
+    {threshold, precision, nConstants, coefRange, numeratorCoefs, denominatorCoefs, 
+     lhsTable, constVals, num, denom, value, key, keyFactor},
     
-    threshold = OptionValue["Threshold", 10^-10];
+    threshold = OptionValue["Threshold"];
+    precision = OptionValue["Precision"];
     
-    (* Evaluate constants to numerical values *)
-    constVals = {1.0} ~ Join ~ N[constants, 50];
+    (* Key factor determines hash precision: 1/threshold gives number of significant digits *)
+    keyFactor = 1 / threshold;
+    
+    (* Evaluate constants to numerical values with specified precision *)
+    constVals = {1.0} ~ Join ~ N[constants, precision];
     nConstants = Length[constVals];
     
     coefRange = Range[-searchRange, searchRange];
@@ -187,7 +198,7 @@ CreateLHSTable[constants_List, searchRange_Integer, opts:OptionsPattern[]] := Mo
         Do[
             num = numCoef . constVals;
             
-            (* Only consider positive numerators to avoid duplication *)
+            (* Only consider positive numerators to avoid duplication (T and -T give same ratio) *)
             If[num > 0,
                 Do[
                     denom = denomCoef . constVals;
@@ -196,8 +207,8 @@ CreateLHSTable[constants_List, searchRange_Integer, opts:OptionsPattern[]] := Mo
                     If[denom != 0,
                         value = N[num/denom, 30];
                         
-                        (* Create hash key from first significant digits *)
-                        key = Floor[value * 10^10];
+                        (* Create hash key from first significant digits based on threshold *)
+                        key = Floor[value * keyFactor];
                         
                         (* Store the coefficients that produce this value *)
                         If[!KeyExistsQ[lhsTable, key],
@@ -235,7 +246,8 @@ FindMobiusTransform[x_?NumericQ, y_?NumericQ, limit_Integer, threshold_:10^-7] :
         Do[
             Do[
                 Do[
-                    (* Check the equation error *)
+                    (* Check the equation error and avoid trivial/redundant solutions *)
+                    (* The constraint a*x + b >= 1 prevents trivial solutions and reduces redundancy *)
                     If[Abs[a*x + b - c*x*y - d*y] < threshold && a*x + b >= 1,
                         If[Abs[a*x + b - c*x*y - d*y] < minError,
                             minError = Abs[a*x + b - c*x*y - d*y];
