@@ -123,7 +123,8 @@ EvaluateGCF[an_List, bn_List, depth_Integer, precision_Integer:50] := Module[
     ];
     
     (* Return the final convergent with specified precision (default 50 digits) *)
-    If[A == 0, 0, N[B/A, precision]]
+    (* Handle near-zero denominators in floating point arithmetic *)
+    If[Abs[A] < 10^(-precision), 0, N[B/A, precision]]
 ];
 
 EvaluateGCF::badprecision = "Precision must be a positive integer, got `1`.";
@@ -263,7 +264,7 @@ FindMobiusTransform[x_?NumericQ, y_?NumericQ, limit_Integer, threshold_:10^-7] :
     (* We want to find integer solutions a, b, c, d within [-limit, limit] *)
     
     minError = Infinity;
-    bestSol = None;
+    bestSol = Null;
     
     (* Brute force search for small limits *)
     Do[
@@ -287,9 +288,9 @@ FindMobiusTransform[x_?NumericQ, y_?NumericQ, limit_Integer, threshold_:10^-7] :
         {a, -limit, limit}
     ];
     
-    If[bestSol =!= None,
+    If[bestSol =!= Null,
         normalizeMobiusTransform[bestSol],
-        None
+        $Failed
     ]
 ];
 
