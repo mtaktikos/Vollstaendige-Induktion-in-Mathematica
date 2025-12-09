@@ -1,8 +1,15 @@
 #!/usr/bin/env wolframscript
 (* Quick Start Guide for Ramanujan Machine Package *)
 
-(* Load the package *)
-Get["Ramanujan.m"]
+(* Load the package - tries current directory, then NotebookDirectory *)
+If[FileExistsQ["Ramanujan.m"],
+    Get["Ramanujan.m"],
+    If[FileExistsQ[FileNameJoin[{NotebookDirectory[], "Ramanujan.m"}]],
+        Get[FileNameJoin[{NotebookDirectory[], "Ramanujan.m"}]],
+        Print["Error: Cannot find Ramanujan.m. Please ensure it's in the current directory or notebook directory."];
+        Quit[]
+    ]
+];
 
 Print["Ramanujan Machine - Quick Start Examples"]
 Print["==========================================\n"]

@@ -16,7 +16,7 @@ GeneralizedContinuedFraction::usage = "GeneralizedContinuedFraction[an, bn, dept
 EvaluateGCF::usage = "EvaluateGCF[an, bn, depth] evaluates a generalized continued fraction to the specified depth with default precision of 50 digits.";
 SimpleContinuedFraction::usage = "SimpleContinuedFraction[constant, depth] computes simple continued fraction expansion.";
 
-FindMobiusTransform::usage = "FindMobiusTransform[x, y, limit, threshold] finds integer Mobius transform T such that T(x) = y. The constraint a*x + b >= 1 avoids trivial solutions and removes redundancy.";
+FindMobiusTransform::usage = "FindMobiusTransform[x, y, limit, threshold] finds integer Mobius transform T such that T(x) = y. Optional threshold (default 10^-7) controls precision. The constraint a*x + b >= 1 avoids trivial solutions. Warning: complexity is O(limit^4).";
 
 CreateLHSTable::usage = "CreateLHSTable[constants, searchRange] creates a lookup table of Mobius transforms of constants. Options: Threshold (default 10^-10), Precision (default 50).";
 
@@ -48,6 +48,8 @@ GetRamanujanConstants[] := Association[
 (* Normalize a Mobius transform by dividing by GCD of all elements *)
 normalizeMobiusTransform[mat_List] := Module[{a, b, c, d, g},
     {{a, b}, {c, d}} = mat;
+    (* Handle zero matrix case *)
+    If[{a, b, c, d} == {0, 0, 0, 0}, Return[mat]];
     g = GCD[a, b, c, d];
     If[g == 0 || g == 1, mat, mat / g]
 ];
@@ -65,9 +67,18 @@ ComposeMobiusTransforms[t1_List, t2_List] := Module[{result},
 (* Inverse of a Mobius transform *)
 InverseMobiusTransform[{{a_, b_}, {c_, d_}}] := Module[{det, result},
     det = a*d - b*c;
+    (* Check for non-invertible transforms (zero determinant) *)
+    If[det == 0, 
+        Message[InverseMobiusTransform::singular]; 
+        Return[$Failed]
+    ];
+    (* The inverse is (1/det) * {{d, -b}, {-c, a}} *)
+    (* We multiply by det and then normalize to keep integer coefficients *)
     result = det * {{d, -b}, {-c, a}};
     normalizeMobiusTransform[result]
 ];
+
+InverseMobiusTransform::singular = "Cannot invert Mobius transform with zero determinant.";
 
 (* Reciprocal transform: transforms T(x) to 1/T(x) *)
 ReciprocalMobiusTransform[{{a_, b_}, {c_, d_}}] := {{c, d}, {a, b}};
@@ -83,6 +94,12 @@ MobiusTransformExpression[{{a_, b_}, {c_, d_}}, x_] := (a*x + b)/(c*x + d);
 (* Uses recursive formula for convergents: https://en.wikipedia.org/wiki/Generalized_continued_fraction *)
 EvaluateGCF[an_List, bn_List, depth_Integer, precision_Integer:50] := Module[
     {prevA, A, prevB, B, i, tmpA, tmpB, len},
+    
+    (* Validate precision parameter *)
+    If[precision <= 0,
+        Message[EvaluateGCF::badprecision, precision];
+        Return[$Failed]
+    ];
     
     len = Min[depth, Length[an], Length[bn]];
     
@@ -108,6 +125,8 @@ EvaluateGCF[an_List, bn_List, depth_Integer, precision_Integer:50] := Module[
     (* Return the final convergent with specified precision (default 50 digits) *)
     If[A == 0, 0, N[B/A, precision]]
 ];
+
+EvaluateGCF::badprecision = "Precision must be a positive integer, got `1`.";
 
 (* Generalized continued fraction with Mobius transform representation *)
 GeneralizedContinuedFraction[an_List, bn_List, depth_Integer] := Module[
@@ -235,6 +254,11 @@ CreateLHSTable[constants_List, searchRange_Integer, opts:OptionsPattern[]] := Mo
 FindMobiusTransform[x_?NumericQ, y_?NumericQ, limit_Integer, threshold_:10^-7] := Module[
     {a, b, c, d, eq, sol, minError, bestSol},
     
+    (* Warn about potentially slow computation for large limits *)
+    If[limit > 20,
+        Message[FindMobiusTransform::slow, limit]
+    ];
+    
     (* The equation is: ax + b - cxy - dy = 0 *)
     (* We want to find integer solutions a, b, c, d within [-limit, limit] *)
     
@@ -268,6 +292,8 @@ FindMobiusTransform[x_?NumericQ, y_?NumericQ, limit_Integer, threshold_:10^-7] :
         None
     ]
 ];
+
+FindMobiusTransform::slow = "Warning: Searching with limit=`1` has O(limit^4) complexity and may be slow. Consider using a smaller limit.";
 
 (* ============================================================================ *)
 (* Utility Functions *)
